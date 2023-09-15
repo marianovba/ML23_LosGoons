@@ -5,6 +5,8 @@ class NaiveBayes():
         self.alpha = 1e-10 if alpha < 1e-10 else alpha
 
     def fit(self, X, y):
+        import numpy as np
+        palabras = np.array()
         # TODO: Calcula la probabilidad de que una muestra sea positiva P(y=1)
         #self.prior_positives = P(y > 1|X) = (P(X|y)*P(y))/P(X)
         #self.prior_positives = P(X|y)*P(y))/P(X) 
@@ -21,9 +23,11 @@ class NaiveBayes():
         # calcula la probabilidad de: P(x_i| y=1)
         # Guardalas en un arreglo de numpy:
         
-        #for word in words:
+        for word in palabras:
             #self.prior_negative = self(y > 1|X) = (self(X|y)*self(y))/self(X)
             #self.prior_negative = self(y < 1|X) = (self(X|y)*self(y))/self(X)
+            np.append(palabras, word)
+            
             
         
         
