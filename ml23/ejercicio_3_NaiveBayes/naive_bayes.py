@@ -44,17 +44,28 @@ class NaiveBayes():
     def predict(self, X):
         # TODO: Calcula la distribución posterior para la clase 1 dado los nuevos puntos X
         # utilizando el prior y los likelihoods calculados anteriormente
-        # P(y = 1 | X) = P(y=1) * P(x1|y=1) * P(x2|y=1) * ... * P(xn|y=1)
-        # posterior_positive = 
-
-        # TODO: Calcula la distribución posterior para la clase 0 dado los nuevos puntos X
-        # utilizando el prior y los likelihoods calculados anteriormente
-        # P(y = 0 | X) = P(y=0) * P(x1|y=0) * P(x2|y=0) * ... * P(xn|y=0)
-        # posterior_negative = 
+        muestras = X.shape[0]
+        predictions = np.zeros(muestras)
+        
+        for i in range(muestras):
+            posterior_positive = self.prior_positives
+            posterior_negative = self.prior_negatives
+            for j in range (X.shape[1]):
+                if X[i,j] == 1:
+                    posterior_positive = posterior_positive * self._likelihoods_positives[j]
+                    posterior_negative = posterior_negative * self._likelihoods_negatives[j]
+                else:
+                    posterior_positive = posterior_positive * (1-self._likelihoods_positives[j])
+                    posterior_negative = posterior_negative * (1-self._likelihoods_negatives[j]) 
+            
 
         # TODO: Determina a que clase pertenece la muestra X dado las distribuciones posteriores
-        # clase = 
-        return
+            if(posterior_positive>posterior_negative):
+                predictions[i] = 1
+            else:
+                predictions[i] = 0 
+            
+        return predictions
     
     def score(self, X, y):
         y_pred = self.predict(X)
