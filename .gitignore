@@ -134,4 +134,4 @@ dmypy.json
 *.csv
 *.pth
 */models/*.pt
-*/data/
+**/data/
