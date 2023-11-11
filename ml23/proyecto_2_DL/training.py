@@ -32,7 +32,85 @@ def validation_step(val_loader, net, cost_function):
         batch_labels = batch_labels.to(device)
         with torch.inference_mode():
             # TODO: realiza un forward pass, calcula el loss y acumula el costo
-            ...
+            
+            def sigmoid(Z):
+                A = 1 / (1 + np.exp(-Z))
+                return A, Z
+
+
+            def tanh(Z):
+                A = np.tanh(Z)
+                return A, Z
+
+
+            def relu(Z):
+                A = np.maximum(0, Z)
+                return A, Z
+
+
+            def leaky_relu(Z):
+                A = np.maximum(0.1 * Z, Z)
+                return A, Z
+            
+            def forwardpass(A_prev, W, b):
+                Z = np.dot(W, A_prev) + b
+                cache = (A_prev, W, b)
+                return Z, cache
+            
+            def activacionlineal(A_prev, W, b, activation_fn):
+                assert activation_fn == "sigmoid" or activation_fn == "tanh" or \
+                    activation_fn == "relu"
+
+                if activation_fn == "sigmoid":
+                    Z, linear_cache = activacionlineal(A_prev, W, b)
+                    A, activation_cache = sigmoid(Z)
+
+                elif activation_fn == "tanh":
+                    Z, linear_cache = activacionlineal(A_prev, W, b)
+                    A, activation_cache = tanh(Z)
+
+                elif activation_fn == "relu":
+                    Z, linear_cache = activacionlineal(A_prev, W, b)
+                    A, activation_cache = relu(Z)
+
+                assert A.shape == (W.shape[0], A_prev.shape[1])
+
+                cache = (linear_cache, activation_cache)
+                return A, cache
+            
+            def modeloforward(X, parameters, hidden_layers_activation_fn="relu"):
+                A = X                           
+                caches = []                     
+                L = len(parameters) // 2        
+
+                for l in range(1, L):
+                    A_prev = A
+                    A, cache = activacionlineal(
+                        A_prev, parameters["W" + str(l)], parameters["b" + str(l)],
+                        activation_fn=hidden_layers_activation_fn)
+                    caches.append(cache)
+
+                AL, cache = activacionlineal(
+                    A, parameters["W" + str(L)], parameters["b" + str(L)],
+                    activation_fn="sigmoid")
+                caches.append(cache)
+
+                assert AL.shape == (1, X.shape[1])
+                return AL, caches
+            
+            forwardpass()
+            activacionlineal()
+            modeloforward()
+            
+            def costo(AL, y):
+                m = y.shape[1]              
+                cost = - (1 / m) * np.sum(
+                    np.multiply(y, np.log(AL)) + np.multiply(1 - y, np.log(1 - AL)))
+                return cost
+            
+            costo
+            
+            
     # TODO: Regresa el costo promedio por minibatch
     return ...
 
