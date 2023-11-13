@@ -38,18 +38,8 @@ def validation_step(val_loader, net, cost_function):
                 return A, Z
 
 
-            def tanh(Z):
-                A = np.tanh(Z)
-                return A, Z
-
-
             def relu(Z):
                 A = np.maximum(0, Z)
-                return A, Z
-
-
-            def leaky_relu(Z):
-                A = np.maximum(0.1 * Z, Z)
                 return A, Z
             
             def forwardpass(A_prev, W, b):
@@ -58,16 +48,12 @@ def validation_step(val_loader, net, cost_function):
                 return Z, cache
             
             def activacionlineal(A_prev, W, b, activation_fn):
-                assert activation_fn == "sigmoid" or activation_fn == "tanh" or \
+                assert activation_fn == "sigmoid" or \
                     activation_fn == "relu"
 
                 if activation_fn == "sigmoid":
                     Z, linear_cache = activacionlineal(A_prev, W, b)
                     A, activation_cache = sigmoid(Z)
-
-                elif activation_fn == "tanh":
-                    Z, linear_cache = activacionlineal(A_prev, W, b)
-                    A, activation_cache = tanh(Z)
 
                 elif activation_fn == "relu":
                     Z, linear_cache = activacionlineal(A_prev, W, b)

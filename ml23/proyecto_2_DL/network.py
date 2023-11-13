@@ -16,7 +16,8 @@ class Network(nn.Module):
 
         # TODO: Define las capas de tu red
         self.conv1 = nn.Conv2d(in_channels=input_dim, out_channels=64, kernel_size=3)
-        self.conv1 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3)
+        self.conv2 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3)
+        self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3)
         self.linear1 = nn.Linear(out_dim, 512)
         self.linear2 = nn.Linear(512, n_classes)
 
@@ -31,6 +32,8 @@ class Network(nn.Module):
         x = self.conv1(x)
         x = F.relu(x)
         x = self.conv2(x)
+        x = F.relu(x)
+        x = self.conv3(x)
         x = F.relu(x)
         x = torch.flatten(x, start_dim=1)
         x = self.linear1(x)
