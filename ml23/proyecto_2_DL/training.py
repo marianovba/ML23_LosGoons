@@ -32,11 +32,10 @@ def validation_step(val_loader, net, cost_function):
         batch_labels = batch_labels.to(device)
         with torch.inference_mode():
             # TODO: realiza un forward pass, calcula el loss y acumula el costo
-            
+            #Dabbura, I. (2018, abril 1). Coding neural network — forward propagation and backpropagtion. Towards Data Science. https://towardsdatascience.com/coding-neural-network-forward-propagation-and-backpropagtion-ccf8cf369f76
             def sigmoid(Z):
                 A = 1 / (1 + np.exp(-Z))
                 return A, Z
-
 
             def relu(Z):
                 A = np.maximum(0, Z)
@@ -47,15 +46,15 @@ def validation_step(val_loader, net, cost_function):
                 cache = (A_prev, W, b)
                 return Z, cache
             
-            def activacionlineal(A_prev, W, b, activation_fn):
-                assert activation_fn == "sigmoid" or \
-                    activation_fn == "relu"
+            def activacionlineal(A_prev, W, b, funcion):
+                assert funcion == "sigmoide" or \
+                    funcion == "relu"
 
-                if activation_fn == "sigmoid":
+                if funcion == "sigmoide":
                     Z, linear_cache = activacionlineal(A_prev, W, b)
                     A, activation_cache = sigmoid(Z)
 
-                elif activation_fn == "relu":
+                elif funcion == "relu":
                     Z, linear_cache = activacionlineal(A_prev, W, b)
                     A, activation_cache = relu(Z)
 
@@ -64,7 +63,7 @@ def validation_step(val_loader, net, cost_function):
                 cache = (linear_cache, activation_cache)
                 return A, cache
             
-            def modeloforward(X, parameters, hidden_layers_activation_fn="relu"):
+            def modeloforward(X, parameters, capasocultasfuncion="relu"):
                 A = X                           
                 caches = []                     
                 L = len(parameters) // 2        
@@ -73,12 +72,12 @@ def validation_step(val_loader, net, cost_function):
                     A_prev = A
                     A, cache = activacionlineal(
                         A_prev, parameters["W" + str(l)], parameters["b" + str(l)],
-                        activation_fn=hidden_layers_activation_fn)
+                        funcion=capasocultasfuncion)
                     caches.append(cache)
 
                 AL, cache = activacionlineal(
                     A, parameters["W" + str(L)], parameters["b" + str(L)],
-                    activation_fn="sigmoid")
+                    funcion="sigmoide")
                 caches.append(cache)
 
                 assert AL.shape == (1, X.shape[1])
@@ -93,12 +92,13 @@ def validation_step(val_loader, net, cost_function):
                 cost = - (1 / m) * np.sum(
                     np.multiply(y, np.log(AL)) + np.multiply(1 - y, np.log(1 - AL)))
                 return cost
-            
-            costo
+        
+            costo()
             
             
     # TODO: Regresa el costo promedio por minibatch
-    return ...
+            costo()
+        return ...
 
 def train():
     # Hyperparametros
