@@ -34,17 +34,73 @@ def validation_step(val_loader, net, cost_function):
         batch_labels = batch_labels.to(device)
         with torch.inference_mode():
             # TODO: realiza un forward pass, calcula el loss y acumula el costo
-            
-            #print(batch)
+            #Dabbura, I. (2018, abril 1). Coding neural network — forward propagation and backpropagtion. Towards Data Science. https://towardsdatascience.com/coding-neural-network-forward-propagation-and-backpropagtion-ccf8cf369f76
+            def sigmoid(Z):
+                A = 1 / (1 + np.exp(-Z))
+                return A, Z
 
-            outputs, _ = net(batch_imgs)#forward pass
-            costo = cost_function(outputs, batch_labels)
-            val_loss += costo.item()
+            def relu(Z):
+                A = np.maximum(0, Z)
+                return A, Z
+            
+            def forwardpass(A_prev, W, b):
+                Z = np.dot(W, A_prev) + b
+                cache = (A_prev, W, b)
+                return Z, cache
+            
+            def activacionlineal(A_prev, W, b, funcion):
+                assert funcion == "sigmoide" or \
+                    funcion == "relu"
+
+                if funcion == "sigmoide":
+                    Z, linear_cache = activacionlineal(A_prev, W, b)
+                    A, activation_cache = sigmoid(Z)
+
+                elif funcion == "relu":
+                    Z, linear_cache = activacionlineal(A_prev, W, b)
+                    A, activation_cache = relu(Z)
+
+                assert A.shape == (W.shape[0], A_prev.shape[1])
+
+                cache = (linear_cache, activation_cache)
+                return A, cache
+            
+            def modeloforward(X, parameters, capasocultasfuncion="relu"):
+                A = X                           
+                caches = []                     
+                L = len(parameters) // 2        
+
+                for l in range(1, L):
+                    A_prev = A
+                    A, cache = activacionlineal(
+                        A_prev, parameters["W" + str(l)], parameters["b" + str(l)],
+                        funcion=capasocultasfuncion)
+                    caches.append(cache)
+
+                AL, cache = activacionlineal(
+                    A, parameters["W" + str(L)], parameters["b" + str(L)],
+                    funcion="sigmoide")
+                caches.append(cache)
+
+                assert AL.shape == (1, X.shape[1])
+                return AL, caches
+            
+            forwardpass()
+            activacionlineal()
+            modeloforward()
+            
+            def costo(AL, y):
+                m = y.shape[1]              
+                cost = - (1 / m) * np.sum(
+                    np.multiply(y, np.log(AL)) + np.multiply(1 - y, np.log(1 - AL)))
+                return cost
+        
+            costo()
             
             
     # TODO: Regresa el costo promedio por minibatch
-    val_loss = val_loss / len(val_loader)
-    return val_loss
+            costo()
+        return ...
 
 def train():
     # Hyperparametros
