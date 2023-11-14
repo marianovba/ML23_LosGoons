@@ -13,6 +13,8 @@ from dataset import get_loader
 from network import Network
 from plot_losses import PlotLosses
 
+print("Is Cuda enabled?",torch.cuda.is_available())
+
 def validation_step(val_loader, net, cost_function):
     '''
         Realiza un epoch completo en el conjunto de validación
@@ -33,86 +35,16 @@ def validation_step(val_loader, net, cost_function):
         with torch.inference_mode():
             # TODO: realiza un forward pass, calcula el loss y acumula el costo
             
-            def sigmoid(Z):
-                A = 1 / (1 + np.exp(-Z))
-                return A, Z
+            #print(batch)
 
-
-            def tanh(Z):
-                A = np.tanh(Z)
-                return A, Z
-
-
-            def relu(Z):
-                A = np.maximum(0, Z)
-                return A, Z
-
-
-            def leaky_relu(Z):
-                A = np.maximum(0.1 * Z, Z)
-                return A, Z
-            
-            def forwardpass(A_prev, W, b):
-                Z = np.dot(W, A_prev) + b
-                cache = (A_prev, W, b)
-                return Z, cache
-            
-            def activacionlineal(A_prev, W, b, activation_fn):
-                assert activation_fn == "sigmoid" or activation_fn == "tanh" or \
-                    activation_fn == "relu"
-
-                if activation_fn == "sigmoid":
-                    Z, linear_cache = activacionlineal(A_prev, W, b)
-                    A, activation_cache = sigmoid(Z)
-
-                elif activation_fn == "tanh":
-                    Z, linear_cache = activacionlineal(A_prev, W, b)
-                    A, activation_cache = tanh(Z)
-
-                elif activation_fn == "relu":
-                    Z, linear_cache = activacionlineal(A_prev, W, b)
-                    A, activation_cache = relu(Z)
-
-                assert A.shape == (W.shape[0], A_prev.shape[1])
-
-                cache = (linear_cache, activation_cache)
-                return A, cache
-            
-            def modeloforward(X, parameters, hidden_layers_activation_fn="relu"):
-                A = X                           
-                caches = []                     
-                L = len(parameters) // 2        
-
-                for l in range(1, L):
-                    A_prev = A
-                    A, cache = activacionlineal(
-                        A_prev, parameters["W" + str(l)], parameters["b" + str(l)],
-                        activation_fn=hidden_layers_activation_fn)
-                    caches.append(cache)
-
-                AL, cache = activacionlineal(
-                    A, parameters["W" + str(L)], parameters["b" + str(L)],
-                    activation_fn="sigmoid")
-                caches.append(cache)
-
-                assert AL.shape == (1, X.shape[1])
-                return AL, caches
-            
-            forwardpass()
-            activacionlineal()
-            modeloforward()
-            
-            def costo(AL, y):
-                m = y.shape[1]              
-                cost = - (1 / m) * np.sum(
-                    np.multiply(y, np.log(AL)) + np.multiply(1 - y, np.log(1 - AL)))
-                return cost
-            
-            costo
+            outputs, _ = net(batch_imgs)#forward pass
+            costo = cost_function(outputs, batch_labels)
+            val_loss += costo.item()
             
             
     # TODO: Regresa el costo promedio por minibatch
-    return ...
+    val_loss = val_loss / len(val_loader)
+    return val_loss
 
 def train():
     # Hyperparametros
@@ -135,12 +67,16 @@ def train():
     # Instanciamos tu red
     modelo = Network(input_dim = 48,
                      n_classes = 7)
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    modelo.to(device)
 
     # TODO: Define la funcion de costo
-    criterion = ...
+    criterion = nn.CrossEntropyLoss() #good
 
     # Define el optimizador
-    optimizer = ...
+    optimizer =  optim.Adam(modelo.parameters(),
+                       lr = learning_rate) #good
 
     best_epoch_loss = np.inf
     for epoch in range(n_epochs):
@@ -148,19 +84,36 @@ def train():
         for i, batch in enumerate(tqdm(train_loader, desc=f"Epoch: {epoch}")):
             batch_imgs = batch['transformed']
             batch_labels = batch['label']
+            #inputs,labels = batch
+            #input = inputs.cuda()
+            #labels = labels.cuda()
+
             # TODO Zero grad, forward pass, backward pass, optimizer step
-            ...
+            optimizer.zero_grad()
+            batch_imgs, batch_labels = batch_imgs.to(modelo.device), batch_labels.to(modelo.device)
+
+            outputs, _ = modelo(batch_imgs) #forward pass
+
+            costo = criterion(outputs, batch_labels)
+            costo.backward() #backward pass
+            
+            optimizer.step() #Actualizacion de los pesos
 
             # TODO acumula el costo
-            ...
+            train_loss += costo.item()
 
         # TODO Calcula el costo promedio
-        train_loss = ...
+        train_loss = train_loss / len(train_loader)
         val_loss = validation_step(val_loader, modelo, criterion)
         tqdm.write(f"Epoch: {epoch}, train_loss: {train_loss:.2f}, val_loss: {val_loss:.2f}")
 
+
+        torch.save(modelo.state_dict(), 'modelo_1.pth')
         # TODO guarda el modelo si el costo de validación es menor al mejor costo de validación
-        ...
+        if(val_loss < best_epoch_loss):
+            best_epoch_loss = val_loss
+            torch.save(modelo.state_dict(), 'mejor_modelo.pth')
+
         plotter.on_epoch_end(epoch, train_loss, val_loss)
     plotter.on_train_end()
 

@@ -14,11 +14,15 @@ class Network(nn.Module):
         # TODO: Calcular dimension de salida
         out_dim = self.calc_out_dim(input_dim, kernel_size=3, stride=1, padding=0)
 
+        print("Input dim: ",input_dim)
+
         # TODO: Define las capas de tu red
-        self.conv1 = nn.Conv2d(in_channels=input_dim, out_channels=64, kernel_size=3)
-        self.conv1 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3)
-        self.linear1 = nn.Linear(out_dim, 512)
-        self.linear2 = nn.Linear(512, n_classes)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=3, padding=9)
+        self.pool1 = nn.MaxPool2d(kernel_size=2)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=8)
+        self.flatten = nn.Flatten()
+        self.linear1 = nn.Linear(64*out_dim*out_dim, 256)
+        self.linear2 = nn.Linear(256, n_classes)
 
         self.to(self.device)
  
@@ -28,16 +32,28 @@ class Network(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # TODO: Define la propagacion hacia adelante de tu red
-        x = self.conv1(x)
+        x = x.to(self.device)
+
+        x = self.conv1(x)   
         x = F.relu(x)
+        x = self.pool1(x)
+
         x = self.conv2(x)
         x = F.relu(x)
-        x = torch.flatten(x, start_dim=1)
+
+        print(x.shape)
+
+        x = self.flatten(x)
+
+        print(x.shape)
+
         x = self.linear1(x)
         x = F.relu(x)
+
         logits = self.linear2(x)
         proba = F.softmax(logits, dim=1)
         return logits, proba
+        #return logits, proba
 
     def predict(self, x):
         with torch.inference_mode():
@@ -52,7 +68,7 @@ class Network(nn.Module):
         '''
         models_path = file_path / 'models' / model_name
         # TODO: Guarda los pesos de tu red neuronal en el path especificado
-        torch.save( self.state_dict(), models_path)
+        torch.save(self.state_dict(), models_path / 'modelo1.pth')
 
     def load_model(self, model_name: str):
         '''
