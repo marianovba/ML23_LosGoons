@@ -63,41 +63,42 @@ from gym.envs.toy_text.frozen_lake import generate_random_map #Utilizar esto par
 #metodo para entrenar al agente 
 def training_waf(iteracion, intentos, exploration_chance, qtable, learning_rate, discount_rate, mininum_chance, decreasing_decay, rewards_per_iteracion):
     #Entrenamiento del agente imbezil
-    #we iterate over episodes
+    #Iteracion sobre varios episodios :((
     e=0
     total_episode_reward = 0
     
     for e in range(iteracion):
-        #we initialize the first state of the episode
+        # Inicializa primer estado del episodio (actual)
         
         current_state = env.reset()[0] #GRAAAAAAAAAAAAAAH X_x
         done = False
     
-        #sum the rewards that the agent gets from the environment
+        # Suma de las recompensas obtenidas del agente en el ambiente
         total_episode_reward = 0
     
         for i in range(intentos): 
             
-            # we sample a float from a uniform distribution over 0 and 1
-            # if the sampled flaot is less than the exploration proba
-            #     the agent selects arandom action
+            # Se selecciona un valor float por medio de una distribucion uniforme entre 0 y 1
+
+            # Si el valor es menor a "exploration proba"
+            #     El imbezil selecciona una accion aleatoria
             # else
-            #     he exploits his knowledge using the bellman equation 
+            #     Explota su conocimiento utilizando la ecuacion de bellman
         
             if np.random.uniform(0,1) < exploration_chance:
                 action = env.action_space.sample()
             else:
                 action = np.argmax(qtable[current_state,:])
         
-            # The environment runs the chosen action and returns
-            # the next state, a reward and true if the epiosed is ended.
+            # El ambiente corre la accion seleccionada y regresa lo siguiente:
+            # El proximo estado, una recompensa y verdadero si el episodio se ha acabado
             info = env.step(action)
             next_state, reward, done, _, _ = info
         
-            # We update our Q-table using the Q-learning iteration
+            #Se actualiza la Q-table utilizando Q-learning iteration
             qtable[int(current_state), action] = (1-learning_rate) * qtable[int(current_state), action] +learning_rate*(reward + discount_rate*np.max(qtable[int(next_state),:]))
             total_episode_reward = total_episode_reward + reward
-            # If the episode is finished, we leave the for loop
+            # Si el episodio se ha acabado, salimos del loop
             if done:
                 break
             print(f"iteracion: {e+1}")
@@ -107,12 +108,12 @@ def training_waf(iteracion, intentos, exploration_chance, qtable, learning_rate,
         print(info)
         
     
-        #We update the exploration proba using exponential decay formula 
+        # Se actualiza la probabilidad de exploracion utilizando la formula de exponential decay
         exploration_chance = max(mininum_chance, np.exp(-decreasing_decay*e))
         rewards_per_iteracion.append(total_episode_reward)   
     env.close()
     
-#Llamar los dos metodos
+# Llamar los metodos
 
 training_waf(iteracion, intentos, exploration_chance, qtable, learning_rate, discount_rate, mininum_chance, decreasing_decay, rewards_per_iteracion)
 plot_episode_rewards(rewards_per_iteracion, directorio)
