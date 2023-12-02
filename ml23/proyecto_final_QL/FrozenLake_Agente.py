@@ -1,17 +1,18 @@
 import gymnasium as gym
 import matplotlib.pyplot as plt
+import pathlib
+from pathlib import Path
 import datetime as dt
 import numpy as np
 import random
 import time
-import os
 
 #PARAMETROS
 
 #El hugo y sus parametros ://////
-iteracion = 100 #episodios
+iteracion = 5 #episodios
 learning_rate = 0.3
-intentos = 100 #numero de intentos
+intentos = 1 #numero de intentos
 discount_rate = 0.4 #gamma
 exploration_chance = 0.5 #epsilon
 semilla = 56738
@@ -19,6 +20,7 @@ mininum_chance = 0.03
 decreasing_decay = 0.01
 rewards_per_iteracion = list()
 env = gym.make('FrozenLake-v1', desc=None, render_mode="human" ,map_name="4x4", is_slippery=False) #ambiente
+directorio = None
 
 #Qtable Printout
 qtable = np.zeros((16,4))
@@ -26,16 +28,32 @@ print(qtable)
 
 
 #PARA GUARDAR LA TABLA
-today = dt.datetime.now().strftime("%Y-%m-%d")
-def plot_episode_rewards(rewards, savefolder=None, savefilename='Recompensa_{today}.png'):
+#algobn las tablas ya se ponen en el directorio
+today = dt.datetime.now()
+def plot_episode_rewards(rewards, directorio):
+    
+    if directorio is None:
+        directorio = Path.cwd()
+    
+    print("Directorio: "+str(directorio))
+
+    fig_directorio = directorio/'ml23'/'proyecto_final_QL'/'reward figures'
+
+
+    timestamp = dt.datetime.now().strftime("%Y%m%d%H%M%S")
+    timestamp = int(timestamp)
+    filename = f'recompensas_{timestamp}.png'
+    rew_file = fig_directorio/filename
+    
     plt.plot(rewards)
     plt.title('Episode Rewards Over Time')
     plt.xlabel('Episode')
     plt.ylabel('Cumulative Reward')
+
+    plt.savefig(rew_file)
+
     plt.show()
-    if savefolder:
-        savepath = os.path.join(savefolder,savefilename)
-        plt.savefig(savepath)
+    
         
     
 
@@ -97,4 +115,4 @@ def training_waf(iteracion, intentos, exploration_chance, qtable, learning_rate,
 #Llamar los dos metodos
 
 training_waf(iteracion, intentos, exploration_chance, qtable, learning_rate, discount_rate, mininum_chance, decreasing_decay, rewards_per_iteracion)
-#plot_episode_rewards(rewards_per_iteracion,savefolder="reward figures")
+plot_episode_rewards(rewards_per_iteracion, directorio)
