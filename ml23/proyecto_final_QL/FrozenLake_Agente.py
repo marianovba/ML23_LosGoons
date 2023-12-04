@@ -10,20 +10,20 @@ import time
 #PARAMETROS
 
 #El hugo y sus parametros ://////
-iteracion = 5 #episodios
+iteracion = 600 #episodios
 learning_rate = 0.3
-intentos = 1 #numero de intentos
+intentos = 100 #numero de intentos
 discount_rate = 0.4 #gamma
 exploration_chance = 0.5 #epsilon
 semilla = 56738
-mininum_chance = 0.03
+mininum_chance = 0.2
 decreasing_decay = 0.01
 rewards_per_iteracion = list()
 env = gym.make('FrozenLake-v1', desc=None, render_mode="human" ,map_name="4x4", is_slippery=False) #ambiente
 directorio = None
 
 #Qtable Printout
-qtable = np.zeros((16,4))
+qtable = np.zeros((env.observation_space.n,env.action_space.n))
 print(qtable)
 
 
@@ -54,7 +54,13 @@ def plot_episode_rewards(rewards, directorio):
 
     plt.show()
     
-        
+def dynamic_params(episodios):
+    if episodios < 200 :
+        return 0.5, 0.2 #Exploration, Min Chance
+    elif episodios < 400:
+        return 0.3, 0.1
+    else:
+        return 0.1, 0.05    
     
 
 #Entrenamiento del Modelo
@@ -88,7 +94,12 @@ def training_waf(iteracion, intentos, exploration_chance, qtable, learning_rate,
             if np.random.uniform(0,1) < exploration_chance:
                 action = env.action_space.sample()
             else:
-                action = np.argmax(qtable[current_state,:])
+                #Aplicamos Heuristica Direccional para ayudar al agente cuando se atore y caiga en los hoyos de posicion 5 y 12
+                current_position = np.argwhere(np.array(env.desc)==b'S')[0]
+                if current_position[1] == 3 and current_position[0] not in [1,2]:
+                    action = 2 # Intentamos empujar al agente a escoger irse a la derecha
+                else:
+                    action = np.argmax(qtable[current_state,:])
         
             # El ambiente corre la accion seleccionada y regresa lo siguiente:
             # El proximo estado, una recompensa y verdadero si el episodio se ha acabado
@@ -98,6 +109,7 @@ def training_waf(iteracion, intentos, exploration_chance, qtable, learning_rate,
             #Se actualiza la Q-table utilizando Q-learning iteration
             qtable[int(current_state), action] = (1-learning_rate) * qtable[int(current_state), action] +learning_rate*(reward + discount_rate*np.max(qtable[int(next_state),:]))
             total_episode_reward = total_episode_reward + reward
+            print(qtable)
             # Si el episodio se ha acabado, salimos del loop
             if done:
                 break
@@ -106,9 +118,10 @@ def training_waf(iteracion, intentos, exploration_chance, qtable, learning_rate,
             env.render()
        
         print(info)
-        
+        print(qtable)
     
         # Se actualiza la probabilidad de exploracion utilizando la formula de exponential decay
+        exploration_chance, mininum_chance = dynamic_params(e)
         exploration_chance = max(mininum_chance, np.exp(-decreasing_decay*e))
         rewards_per_iteracion.append(total_episode_reward)   
     env.close()
